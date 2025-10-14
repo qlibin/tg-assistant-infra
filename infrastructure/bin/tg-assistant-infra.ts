@@ -7,7 +7,6 @@ interface EnvConfig {
   account: string;
   region: string;
   envName: string;
-  lambdaName: string;
   tags?: Record<string, string>;
 }
 
