@@ -3,7 +3,11 @@ name: CD
 on:
   push:
     branches: [ "main" ]
-
+    paths:
+      - "infrastructure/**"
+      - "!infrastructure/test/**"
+      - "!infrastructure/**/*.md"
+      - ".github/workflows/cd.yml"
 concurrency:
   group: pa-${{ github.ref_name }}
   cancel-in-progress: true
@@ -30,6 +34,7 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
       - name: Install infra dependencies
         working-directory: infrastructure
@@ -77,6 +82,7 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
       - name: Install infra dependencies
         working-directory: infrastructure
