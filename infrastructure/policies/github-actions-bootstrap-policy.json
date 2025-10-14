@@ -1,0 +1,121 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowSSMParamsForBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:PutParameter",
+        "ssm:GetParameter",
+        "ssm:DeleteParameter",
+        "ssm:DescribeParameters"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowIAMRoleManagementForBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:TagRole",
+        "iam:UpdateRole",
+        "iam:PassRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:CreateInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "iam:RemoveRoleFromInstanceProfile"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/cdk-*",
+        "arn:aws:iam::*:role/CDK-*",
+        "arn:aws:iam::*:role/*PublishingRole*",
+        "arn:aws:iam::*:role/*FileAsset*",
+        "arn:aws:iam::*:role/*ImageAsset*",
+        "arn:aws:iam::*:instance-profile/*"
+      ]
+    },
+    {
+      "Sid": "AllowS3ForBootstrapBuckets",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:PutBucketPolicy",
+        "s3:PutBucketVersioning",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutLifecycleConfiguration",
+        "s3:GetBucketPolicy",
+        "s3:ListBucket",
+        "s3:PutBucketTagging",
+        "s3:DeleteBucketPolicy"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "s3:ResourceAccount": "${aws:PrincipalAccount}"
+        }
+      }
+    },
+    {
+      "Sid": "AllowECRForAssetRepos",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
+        "ecr:SetRepositoryPolicy",
+        "ecr:PutImageTagMutability",
+        "ecr:PutLifecyclePolicy",
+        "ecr:GetLifecyclePolicy",
+        "ecr:BatchDeleteImage"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowCloudFormationForBootstrapStack",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:GetTemplate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowKMSForS3EcrIfManagedKeys",
+      "Effect": "Allow",
+      "Action": [
+        "kms:CreateGrant",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:Decrypt"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": [
+            "s3.eu-central-1.amazonaws.com",
+            "ecr.eu-central-1.amazonaws.com"
+          ]
+        }
+      }
+    }
+  ]
+}

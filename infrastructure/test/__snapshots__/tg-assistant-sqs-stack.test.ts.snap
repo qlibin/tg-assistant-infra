@@ -1,0 +1,664 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SQS Stack synthesizes expected CloudFormation template (snapshot) 1`] = `
+{
+  "Description": "Dual queue stack test",
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "FeedbackLambdaRole873CF38C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:ChangeMessageVisibility",
+                    "sqs:GetQueueAttributes",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ResultQueue98CD34E0",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "sqs:SendMessage",
+                    "sqs:GetQueueAttributes",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "OrderQueue39B99167",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "QueueEncryptionKeyB11AE894",
+                      "Arn",
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "FeedbackDualQueueAccess",
+          },
+        ],
+        "RoleName": "tg-assistant-dev-feedback-role",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FeedbackRoleArn072A2029": {
+      "Properties": {
+        "Description": "Feedback Lambda IAM Role ARN",
+        "Name": "/automation/dev/roles/feedback/arn",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "FeedbackLambdaRole873CF38C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "OrderDLQ87642B43": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "QueueEncryptionKeyB11AE894",
+            "Arn",
+          ],
+        },
+        "MessageRetentionPeriod": 604800,
+        "QueueName": "tg-assistant-dev-order-dlq",
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OrderDLQAlarmC742FD20": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "AlarmDescription": "Failed orders in Dead Letter Queue",
+        "AlarmName": "tg-assistant-dev-order-dlq-messages",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "OrderDLQ87642B43",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "OKActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "OrderQueue39B99167": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "QueueEncryptionKeyB11AE894",
+            "Arn",
+          ],
+        },
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "tg-assistant-dev-order",
+        "ReceiveMessageWaitTimeSeconds": 6,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "OrderDLQ87642B43",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "VisibilityTimeout": 300,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OrderQueueAgeAlarmF610EF40": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "AlarmDescription": "Order messages aging in queue",
+        "AlarmName": "tg-assistant-dev-order-message-age",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "OrderQueue39B99167",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "ApproximateAgeOfOldestMessage",
+        "Namespace": "AWS/SQS",
+        "OKActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 900,
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "OrderQueueArnCD29671B": {
+      "Properties": {
+        "Description": "Order Queue ARN for IAM permissions and monitoring",
+        "Name": "/automation/dev/queues/order/arn",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "OrderQueue39B99167",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "OrderQueueUrlD58C427B": {
+      "Properties": {
+        "Description": "Order Queue URL for task distribution and requeue operations",
+        "Name": "/automation/dev/queues/order/url",
+        "Type": "String",
+        "Value": {
+          "Ref": "OrderQueue39B99167",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "QueueAlertTopic10D241EF": {
+      "Properties": {
+        "DisplayName": "SQS Alerts for Watch Tower",
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "QueueEncryptionKeyB11AE894",
+            "Arn",
+          ],
+        },
+        "TopicName": "tg-assistant-dev-queue-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "QueueAlertTopicArnA604BDCE": {
+      "Properties": {
+        "Description": "SNS Topic ARN for queue alerts integration with Watch Tower",
+        "Name": "/automation/dev/monitoring/queue-alerts/topic-arn",
+        "Type": "String",
+        "Value": {
+          "Ref": "QueueAlertTopic10D241EF",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "QueueConfigurationE3E77BFC": {
+      "Properties": {
+        "Description": "Queue configuration parameters for Lambda integration",
+        "Name": "/automation/dev/queues/config",
+        "Type": "String",
+        "Value": "{"orderQueue":{"visibilityTimeout":300,"maxReceiveCount":3},"resultQueue":{"visibilityTimeout":180,"maxReceiveCount":3}}",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "QueueEncryptionKeyB11AE894": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "Description": "tg-assistant-dev SQS encryption key",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "ResultDLQAB3B9549": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "QueueEncryptionKeyB11AE894",
+            "Arn",
+          ],
+        },
+        "MessageRetentionPeriod": 604800,
+        "QueueName": "tg-assistant-dev-result-dlq",
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ResultDLQAlarmA62BED81": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "AlarmDescription": "Failed results in Dead Letter Queue",
+        "AlarmName": "tg-assistant-dev-result-dlq-messages",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "ResultDLQAB3B9549",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "OKActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "ResultQueue98CD34E0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "QueueEncryptionKeyB11AE894",
+            "Arn",
+          ],
+        },
+        "MessageRetentionPeriod": 604800,
+        "QueueName": "tg-assistant-dev-result",
+        "ReceiveMessageWaitTimeSeconds": 6,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "ResultDLQAB3B9549",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "VisibilityTimeout": 180,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ResultQueueAgeAlarm240E7086": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "AlarmDescription": "Result messages aging in queue",
+        "AlarmName": "tg-assistant-dev-result-message-age",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "ResultQueue98CD34E0",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "ApproximateAgeOfOldestMessage",
+        "Namespace": "AWS/SQS",
+        "OKActions": [
+          {
+            "Ref": "QueueAlertTopic10D241EF",
+          },
+        ],
+        "Period": 180,
+        "Statistic": "Maximum",
+        "Threshold": 600,
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "ResultQueueArn37463251": {
+      "Properties": {
+        "Description": "Result Queue ARN for IAM permissions and monitoring",
+        "Name": "/automation/dev/queues/result/arn",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "ResultQueue98CD34E0",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "ResultQueueUrl65EA052C": {
+      "Properties": {
+        "Description": "Result Queue URL for processing results and feedback",
+        "Name": "/automation/dev/queues/result/url",
+        "Type": "String",
+        "Value": {
+          "Ref": "ResultQueue98CD34E0",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "WebhookLambdaRole9BFB4813": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "sqs:SendMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:GetQueueUrl",
+                  ],
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:SourceAccount": "123456789012",
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "OrderQueue39B99167",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "QueueEncryptionKeyB11AE894",
+                      "Arn",
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "OrderQueueProducer",
+          },
+        ],
+        "RoleName": "tg-assistant-dev-webhook-role",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WebhookRoleArn672441D1": {
+      "Properties": {
+        "Description": "Webhook Lambda IAM Role ARN",
+        "Name": "/automation/dev/roles/webhook/arn",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "WebhookLambdaRole9BFB4813",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "WorkerLambdaRoleC56B01A8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:ChangeMessageVisibility",
+                    "sqs:GetQueueAttributes",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "OrderQueue39B99167",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "sqs:SendMessage",
+                    "sqs:GetQueueAttributes",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ResultQueue98CD34E0",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "QueueEncryptionKeyB11AE894",
+                      "Arn",
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "DualQueueWorkerAccess",
+          },
+        ],
+        "RoleName": "tg-assistant-dev-worker-role",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkerRoleArn2B2D8264": {
+      "Properties": {
+        "Description": "Worker Lambda IAM Role ARN",
+        "Name": "/automation/dev/roles/worker/arn",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "WorkerLambdaRoleC56B01A8",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-validate-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install infra dependencies
+        working-directory: infrastructure
+        run: npm ci
+
+      - name: Infra Build
+        working-directory: infrastructure
+        run: npm run build
+
+      - name: Infra Type-check
+        working-directory: infrastructure
+        run: npm run type-check
+
+      - name: Infra Lint
+        working-directory: infrastructure
+        run: npm run lint
+
+      - name: Infra Format check
+        working-directory: infrastructure
+        run: npm run format:check
+
+      - name: Infra Tests
+        working-directory: infrastructure
+        run: npm run test
