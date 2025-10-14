@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
       - name: Install infra dependencies
         working-directory: infrastructure
@@ -77,6 +78,7 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
       - name: Install infra dependencies
         working-directory: infrastructure
