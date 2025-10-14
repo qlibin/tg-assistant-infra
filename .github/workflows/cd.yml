@@ -3,7 +3,11 @@ name: CD
 on:
   push:
     branches: [ "main" ]
-
+    paths:
+      - "infrastructure/**"
+      - "!infrastructure/test/**"
+      - "!infrastructure/**/*.md"
+      - ".github/workflows/cd.yml"
 concurrency:
   group: pa-${{ github.ref_name }}
   cancel-in-progress: true
