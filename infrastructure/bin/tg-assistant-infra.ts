@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 import "source-map-support/register.js";
 import * as cdk from "aws-cdk-lib";
-import { SQSStack } from "../lib/sqs-stack";
+import { SQSStack } from "../lib/sqs-stack.js";
 
 interface EnvConfig {
   account: string;
   region: string;
   envName: string;
-  lambdaName: string;
   tags?: Record<string, string>;
 }
 

@@ -1,14 +1,13 @@
 {
-  "app": "node --loader ts-node/esm bin/tg-assistant-lambda.ts",
+  "app": "node --loader ts-node/esm bin/tg-assistant-infra.ts",
   "context": {
     "environments": {
       "dev": {
         "account": "182399716679",
         "region": "eu-central-1",
         "envName": "dev",
-        "lambdaName": "telegram-webhook-lambda-dev",
         "tags": {
-          "app": "telegram-webhook",
+          "app": "telegram-assistant-infra",
           "env": "dev"
         }
       },
@@ -16,9 +15,8 @@
         "account": "182399716679",
         "region": "eu-central-1",
         "envName": "test",
-        "lambdaName": "telegram-webhook-lambda-test",
         "tags": {
-          "app": "telegram-webhook",
+          "app": "telegram-assistant-infra",
           "env": "test"
         }
       },
@@ -26,9 +24,8 @@
         "account": "182399716679",
         "region": "eu-central-1",
         "envName": "prod",
-        "lambdaName": "telegram-webhook-lambda",
         "tags": {
-          "app": "telegram-webhook",
+          "app": "telegram-assistant-infra",
           "env": "prod"
         }
       }
