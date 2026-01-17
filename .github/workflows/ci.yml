@@ -21,6 +21,7 @@ env:
 jobs:
   build-validate-test:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Checkout
