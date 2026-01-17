@@ -13,6 +13,7 @@
     "format:check": "prettier --check bin/ lib/ test/",
     "cdk": "cdk",
     "synth": "cdk synth",
+    "diff": "cdk diff",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
     "test": "jest --coverage",
