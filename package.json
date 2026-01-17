@@ -7,7 +7,7 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "husky": "^8.0.0"
+    "husky": "^9.1.7"
   },
   "dependencies": {
   }
