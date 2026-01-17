@@ -84,11 +84,14 @@ jobs:
       - name: Post Diff to PR
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
+        env:
+          DIFF_OUTPUT: ${{ steps.diff.outputs.diff_output }}
         with:
           script: |
-            const output = `#### CDK Diff Output (${{ env.ENV_NAME }})
+            const diffOutput = process.env.DIFF_OUTPUT;
+            const output = `#### CDK Diff Output (${process.env.ENV_NAME})
             \`\`\`
-            ${{ steps.diff.outputs.diff_output }}
+            ${diffOutput}
             \`\`\`
             `;
             github.rest.issues.createComment({
