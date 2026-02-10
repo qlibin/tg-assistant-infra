@@ -50,6 +50,20 @@ Defined in `infrastructure/cdk.json` context. Environments: `dev`, `test`, `prod
 
 SSM parameters exported under `/automation/{environment}/...`.
 
+## Deployment
+
+Automated deployment via GitHub Actions workflows:
+- **CI** (`.github/workflows/ci.yml`): Runs on PRs to validate and generate CDK diff
+- **CD** (`.github/workflows/cd.yml`): Runs on main branch pushes to deploy changes
+
+**AWS Authentication:** Uses `GithubActionsDeploymentRole` IAM role via OIDC (OpenID Connect).
+
+**CDK Bootstrap:** Controlled by `RUN_BOOTSTRAP` GitHub environment variable. When set to `'true'`, runs CDK bootstrap during deployment. By default, assumes the account is pre-bootstrapped.
+
+**Important:** When adding new AWS resources, ensure `GithubActionsDeploymentRole` has necessary permissions to deploy those resources. Follow principle of least privilege - grant only required permissions.
+
+**Environment:** Deploys to `dev` environment by default (configurable via `ENV_NAME`).
+
 ## Testing
 
 Uses Jest with CDK assertions and snapshot testing. Snapshot tests capture full CloudFormation template.
