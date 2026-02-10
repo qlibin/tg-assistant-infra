@@ -2,12 +2,19 @@
 import "source-map-support/register.js";
 import * as cdk from "aws-cdk-lib";
 import { SQSStack } from "../lib/sqs-stack.js";
+import { ApiGatewayStack } from "../lib/api-gateway-stack.js";
 
 interface EnvConfig {
   account: string;
   region: string;
   envName: string;
   tags?: Record<string, string>;
+  certificateArn?: string;
+  hostedZoneId?: string;
+  hostedZoneName?: string;
+  domainName?: string;
+  existingDomainRegionalDomainName?: string;
+  existingDomainRegionalHostedZoneId?: string;
 }
 
 const app = new cdk.App();
@@ -47,7 +54,7 @@ if (providedAccountId && providedAccountId !== envCfg.account) {
   );
 }
 
-const stack = new SQSStack(app, `DualQueueMessageStack-${envCfg.envName}`, {
+const sqsStack = new SQSStack(app, `DualQueueMessageStack-${envCfg.envName}`, {
   env: { account: envCfg.account, region: envCfg.region },
   description: `Dual SQS queues for TG Assistant (${envCfg.envName})`,
   environment: envCfg.envName,
@@ -55,5 +62,40 @@ const stack = new SQSStack(app, `DualQueueMessageStack-${envCfg.envName}`, {
   tags: envCfg.tags ?? {},
 });
 
-cdk.Tags.of(stack).add("app", "telegram-webhook");
-cdk.Tags.of(stack).add("env", envCfg.envName);
+cdk.Tags.of(sqsStack).add("app", "telegram-webhook");
+cdk.Tags.of(sqsStack).add("env", envCfg.envName);
+
+// API Gateway Stack (only if configuration is available)
+if (
+  envCfg.certificateArn &&
+  envCfg.hostedZoneId &&
+  envCfg.hostedZoneName &&
+  envCfg.domainName
+) {
+  const apiGatewayStack = new ApiGatewayStack(
+    app,
+    `ApiGatewayStack-${envCfg.envName}`,
+    {
+      env: { account: envCfg.account, region: envCfg.region },
+      description: `API Gateway for TG Assistant (${envCfg.envName})`,
+      environment: envCfg.envName,
+      projectName: "tg-assistant",
+      lambdaFunctionName: `telegram-webhook-lambda-${envCfg.envName}`,
+      certificateArn: envCfg.certificateArn,
+      hostedZoneId: envCfg.hostedZoneId,
+      hostedZoneName: envCfg.hostedZoneName,
+      domainName: envCfg.domainName,
+      basePath: envCfg.envName,
+      existingDomainRegionalDomainName: envCfg.existingDomainRegionalDomainName,
+      existingDomainRegionalHostedZoneId:
+        envCfg.existingDomainRegionalHostedZoneId,
+      createDnsRecord: false, // DNS record already exists for tg.qlibin.com
+      tags: envCfg.tags ?? {},
+    },
+  );
+
+  apiGatewayStack.addDependency(sqsStack);
+
+  cdk.Tags.of(apiGatewayStack).add("app", "telegram-webhook");
+  cdk.Tags.of(apiGatewayStack).add("env", envCfg.envName);
+}

@@ -9,7 +9,13 @@
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "dev"
-        }
+        },
+        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
+        "hostedZoneId": "Z0063833342G11THSVYEP",
+        "hostedZoneName": "qlibin.com",
+        "domainName": "tg.qlibin.com",
+        "existingDomainRegionalDomainName": "d-ekl8ubthta.execute-api.eu-central-1.amazonaws.com",
+        "existingDomainRegionalHostedZoneId": "Z1U9ULNL0V5AJ3"
       },
       "test": {
         "account": "182399716679",
@@ -18,7 +24,13 @@
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "test"
-        }
+        },
+        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
+        "hostedZoneId": "Z0063833342G11THSVYEP",
+        "hostedZoneName": "qlibin.com",
+        "domainName": "tg.qlibin.com",
+        "existingDomainRegionalDomainName": "d-ekl8ubthta.execute-api.eu-central-1.amazonaws.com",
+        "existingDomainRegionalHostedZoneId": "Z1U9ULNL0V5AJ3"
       },
       "prod": {
         "account": "182399716679",
@@ -27,7 +39,13 @@
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "prod"
-        }
+        },
+        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
+        "hostedZoneId": "Z0063833342G11THSVYEP",
+        "hostedZoneName": "qlibin.com",
+        "domainName": "tg.qlibin.com",
+        "existingDomainRegionalDomainName": "d-ekl8ubthta.execute-api.eu-central-1.amazonaws.com",
+        "existingDomainRegionalHostedZoneId": "Z1U9ULNL0V5AJ3"
       }
     },
     "defaultEnvironment": "dev"
