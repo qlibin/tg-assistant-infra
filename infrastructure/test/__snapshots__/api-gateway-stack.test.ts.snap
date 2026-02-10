@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`ApiGateway Stack with imported existing domain (production scenario) synthesizes expected CloudFormation template (snapshot) 1`] = `
 {
