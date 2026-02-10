@@ -105,4 +105,4 @@ jobs:
           ENV_NAME: ${{ env.ENV_NAME }}
           API_GATEWAY_SOURCE_ARN: ${{ env.API_GATEWAY_SOURCE_ARN }}
         run: |
-          npx cdk deploy --require-approval never -c environment=${ENV_NAME} -c apiGatewaySourceArn=${API_GATEWAY_SOURCE_ARN}
+          npx cdk deploy '**' --require-approval never -c environment=${ENV_NAME} -c apiGatewaySourceArn=${API_GATEWAY_SOURCE_ARN}
