@@ -1,0 +1,457 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ApiGateway Stack with imported existing domain (production scenario) synthesizes expected CloudFormation template (snapshot) 1`] = `
+{
+  "Description": "API Gateway stack test",
+  "Outputs": {
+    "RestApiEndpoint0551178A": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "RestApi0C43BF4B",
+            },
+            ".execute-api.eu-central-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "RestApiDeploymentStagedevDA121244",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Api5XXErrorAlarm6573604F": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "ApiAlertTopicA00A90DE",
+          },
+        ],
+        "AlarmDescription": "API Gateway 5XX errors detected",
+        "AlarmName": "tg-assistant-dev-api-5xx-errors",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "ApiName",
+            "Value": "tg-assistant-telegram-bot-api-dev",
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "5XXError",
+        "Namespace": "AWS/ApiGateway",
+        "OKActions": [
+          {
+            "Ref": "ApiAlertTopicA00A90DE",
+          },
+        ],
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 5,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "ApiAlertTopicA00A90DE": {
+      "Properties": {
+        "DisplayName": "API Gateway Alerts",
+        "TopicName": "tg-assistant-dev-api-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "ApiLatencyAlarm453002C0": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "ApiAlertTopicA00A90DE",
+          },
+        ],
+        "AlarmDescription": "API Gateway latency exceeds threshold",
+        "AlarmName": "tg-assistant-dev-api-latency",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "ApiName",
+            "Value": "tg-assistant-telegram-bot-api-dev",
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "ExtendedStatistic": "p95",
+        "MetricName": "Latency",
+        "Namespace": "AWS/ApiGateway",
+        "OKActions": [
+          {
+            "Ref": "ApiAlertTopicA00A90DE",
+          },
+        ],
+        "Period": 300,
+        "Threshold": 5000,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "BasePathMappingF35F2767": {
+      "Properties": {
+        "BasePath": "dev",
+        "DomainName": "tg.qlibin.com",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B",
+        },
+        "Stage": {
+          "Ref": "RestApiDeploymentStagedevDA121244",
+        },
+      },
+      "Type": "AWS::ApiGateway::BasePathMapping",
+    },
+    "DomainNameParamB41E83D4": {
+      "Properties": {
+        "Description": "Custom domain name for API Gateway",
+        "Name": "/automation/dev/api-gateway/domain-name",
+        "Type": "String",
+        "Value": "tg.qlibin.com",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "RestApi0C43BF4B": {
+      "Properties": {
+        "Description": "Telegram bot API Gateway for dev",
+        "DisableExecuteApiEndpoint": true,
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "tg-assistant-telegram-bot-api-dev",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "RestApiAccount7C83CF5A": {
+      "DeletionPolicy": "Retain",
+      "DependsOn": [
+        "RestApi0C43BF4B",
+      ],
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "RestApiCloudWatchRoleE3ED6605",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ApiGateway::Account",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "RestApiCloudWatchRoleE3ED6605": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "RestApiDeployment180EC5030d54366452cfc918e96a88f616e8ae56": {
+      "DependsOn": [
+        "RestApiqlibinassistantlistenerPOST3623069F",
+        "RestApiqlibinassistantlistenerB8719A5D",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Telegram bot API Gateway for dev",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "RestApiDeploymentStagedevDA121244": {
+      "DependsOn": [
+        "RestApiAccount7C83CF5A",
+      ],
+      "Properties": {
+        "DeploymentId": {
+          "Ref": "RestApiDeployment180EC5030d54366452cfc918e96a88f616e8ae56",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+            "ThrottlingBurstLimit": 25,
+            "ThrottlingRateLimit": 10,
+          },
+        ],
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B",
+        },
+        "StageName": "dev",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "RestApiId2A228A0B": {
+      "Properties": {
+        "Description": "REST API ID for API Gateway",
+        "Name": "/automation/dev/api-gateway/rest-api-id",
+        "Type": "String",
+        "Value": {
+          "Ref": "RestApi0C43BF4B",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "RestApiUrl69A836A3": {
+      "Properties": {
+        "Description": "REST API URL (execute-api endpoint)",
+        "Name": "/automation/dev/api-gateway/rest-api-url",
+        "Type": "String",
+        "Value": {
+          "Fn::Join": [
+            "",
+            [
+              "https://",
+              {
+                "Ref": "RestApi0C43BF4B",
+              },
+              ".execute-api.eu-central-1.",
+              {
+                "Ref": "AWS::URLSuffix",
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStagedevDA121244",
+              },
+              "/",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "RestApiqlibinassistantlistenerB8719A5D": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "RestApi0C43BF4B",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "qlibin-assistant-listener",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "RestApiqlibinassistantlistenerPOST3623069F": {
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "TimeoutInMillis": 29000,
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:eu-central-1:lambda:path/2015-03-31/functions/arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":lambda:eu-central-1:123456789012:function:telegram-webhook-lambda-dev/invocations",
+              ],
+            ],
+          },
+        },
+        "ResourceId": {
+          "Ref": "RestApiqlibinassistantlistenerB8719A5D",
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "RestApiqlibinassistantlistenerPOSTApiPermissionTestApiGatewayStackRestApi0B030BF2POSTqlibinassistantlistener4A42CE6A": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":lambda:eu-central-1:123456789012:function:telegram-webhook-lambda-dev",
+            ],
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:eu-central-1:123456789012:",
+              {
+                "Ref": "RestApi0C43BF4B",
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStagedevDA121244",
+              },
+              "/POST/qlibin-assistant-listener",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RestApiqlibinassistantlistenerPOSTApiPermissionTestTestApiGatewayStackRestApi0B030BF2POSTqlibinassistantlistener6A2F6B9F": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":lambda:eu-central-1:123456789012:function:telegram-webhook-lambda-dev",
+            ],
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:eu-central-1:123456789012:",
+              {
+                "Ref": "RestApi0C43BF4B",
+              },
+              "/test-invoke-stage/POST/qlibin-assistant-listener",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SourceArnA427948C": {
+      "Properties": {
+        "Description": "API Gateway source ARN for Lambda resource-based permissions",
+        "Name": "/automation/dev/api-gateway/source-arn",
+        "Type": "String",
+        "Value": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:eu-central-1:123456789012:",
+              {
+                "Ref": "RestApi0C43BF4B",
+              },
+              "/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "StageName5D71D5D1": {
+      "Properties": {
+        "Description": "API Gateway stage name",
+        "Name": "/automation/dev/api-gateway/stage-name",
+        "Type": "String",
+        "Value": "dev",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
