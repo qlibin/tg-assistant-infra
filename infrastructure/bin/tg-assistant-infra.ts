@@ -80,7 +80,6 @@ if (
       description: `API Gateway for TG Assistant (${envCfg.envName})`,
       environment: envCfg.envName,
       projectName: "tg-assistant",
-      lambdaFunctionName: `telegram-webhook-lambda-${envCfg.envName}`,
       certificateArn: envCfg.certificateArn,
       hostedZoneId: envCfg.hostedZoneId,
       hostedZoneName: envCfg.hostedZoneName,

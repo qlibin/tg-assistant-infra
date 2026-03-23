@@ -14,7 +14,6 @@ describe("ApiGateway Stack", () => {
     description: "API Gateway stack test",
     environment: "dev",
     projectName: "tg-assistant",
-    lambdaFunctionName: "telegram-webhook-lambda-dev",
     certificateArn:
       "arn:aws:acm:eu-central-1:123456789012:certificate/test-cert-id",
     hostedZoneId: "Z0063833342G11THSVYEP",
@@ -159,21 +158,14 @@ describe("ApiGateway Stack", () => {
       });
     });
 
-    test("creates POST route with Lambda integration", () => {
+    test("does not create any routes (consumers own their routes)", () => {
       // Arrange
       const stack = makeStackWithImportedDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
-      // Assert
-      template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
-        RouteKey: "POST /qlibin-assistant-listener",
-      });
-
-      template.hasResourceProperties("AWS::ApiGatewayV2::Integration", {
-        IntegrationType: "AWS_PROXY",
-        PayloadFormatVersion: "1.0",
-        TimeoutInMillis: 29000,
-      });
+      // Assert - no routes or integrations created
+      template.resourceCountIs("AWS::ApiGatewayV2::Route", 0);
+      template.resourceCountIs("AWS::ApiGatewayV2::Integration", 0);
     });
 
     test("creates stage with throttling settings (10 rate, 25 burst) and auto-deploy", () => {
@@ -239,8 +231,6 @@ describe("ApiGateway Stack", () => {
         "/automation/dev/api-gateway/id",
         "/automation/dev/api-gateway/url",
         "/automation/dev/api-gateway/domain-name",
-        "/automation/dev/api-gateway/stage-name",
-        "/automation/dev/api-gateway/source-arn",
       ];
 
       // Assert

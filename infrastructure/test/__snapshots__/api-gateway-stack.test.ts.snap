@@ -160,85 +160,6 @@ exports[`ApiGateway Stack with imported existing domain (production scenario) sy
       },
       "Type": "AWS::ApiGatewayV2::Api",
     },
-    "HttpApiPOSTqlibinassistantlistener6AC1F566": {
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7",
-        },
-        "AuthorizationType": "NONE",
-        "RouteKey": "POST /qlibin-assistant-listener",
-        "Target": {
-          "Fn::Join": [
-            "",
-            [
-              "integrations/",
-              {
-                "Ref": "HttpApiPOSTqlibinassistantlistenerWebhookIntegrationB9EB3F70",
-              },
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::ApiGatewayV2::Route",
-    },
-    "HttpApiPOSTqlibinassistantlistenerWebhookIntegrationB9EB3F70": {
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7",
-        },
-        "IntegrationType": "AWS_PROXY",
-        "IntegrationUri": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":lambda:eu-central-1:123456789012:function:telegram-webhook-lambda-dev",
-            ],
-          ],
-        },
-        "PayloadFormatVersion": "1.0",
-        "TimeoutInMillis": 29000,
-      },
-      "Type": "AWS::ApiGatewayV2::Integration",
-    },
-    "HttpApiPOSTqlibinassistantlistenerWebhookIntegrationPermission96ADDCB6": {
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":lambda:eu-central-1:123456789012:function:telegram-webhook-lambda-dev",
-            ],
-          ],
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":execute-api:eu-central-1:123456789012:",
-              {
-                "Ref": "HttpApiF5A9A8A7",
-              },
-              "/*/*/qlibin-assistant-listener",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
-    },
     "HttpStageB46AEAD3": {
       "Properties": {
         "AccessLogSettings": {
@@ -262,39 +183,6 @@ exports[`ApiGateway Stack with imported existing domain (production scenario) sy
         "StageName": "dev",
       },
       "Type": "AWS::ApiGatewayV2::Stage",
-    },
-    "SourceArnA427948C": {
-      "Properties": {
-        "Description": "API Gateway source ARN for Lambda resource-based permissions",
-        "Name": "/automation/dev/api-gateway/source-arn",
-        "Type": "String",
-        "Value": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":execute-api:eu-central-1:123456789012:",
-              {
-                "Ref": "HttpApiF5A9A8A7",
-              },
-              "/*",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::SSM::Parameter",
-    },
-    "StageName5D71D5D1": {
-      "Properties": {
-        "Description": "API Gateway stage name",
-        "Name": "/automation/dev/api-gateway/stage-name",
-        "Type": "String",
-        "Value": "dev",
-      },
-      "Type": "AWS::SSM::Parameter",
     },
   },
   "Rules": {
