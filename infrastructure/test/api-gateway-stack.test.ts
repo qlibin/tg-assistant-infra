@@ -231,7 +231,6 @@ describe("ApiGateway Stack", () => {
         "/automation/dev/api-gateway/id",
         "/automation/dev/api-gateway/url",
         "/automation/dev/api-gateway/domain-name",
-        "/automation/dev/api-gateway/stage-name",
       ];
 
       // Assert

@@ -184,15 +184,6 @@ exports[`ApiGateway Stack with imported existing domain (production scenario) sy
       },
       "Type": "AWS::ApiGatewayV2::Stage",
     },
-    "StageName5D71D5D1": {
-      "Properties": {
-        "Description": "API Gateway stage name",
-        "Name": "/automation/dev/api-gateway/stage-name",
-        "Type": "String",
-        "Value": "dev",
-      },
-      "Type": "AWS::SSM::Parameter",
-    },
   },
   "Rules": {
     "CheckBootstrapVersion": {

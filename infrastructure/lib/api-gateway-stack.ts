@@ -243,11 +243,5 @@ export class ApiGatewayStack extends Stack {
       stringValue: domainName,
       description: "Custom domain name for API Gateway",
     });
-
-    new StringParameter(this, "StageName", {
-      parameterName: `/automation/${environment}/api-gateway/stage-name`,
-      stringValue: environment,
-      description: "API Gateway stage name",
-    });
   }
 }
