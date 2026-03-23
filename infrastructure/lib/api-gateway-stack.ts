@@ -1,15 +1,16 @@
 import { Duration, Stack, StackProps, Arn } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
-  RestApi,
-  LambdaIntegration,
-  EndpointType,
-  MethodLoggingLevel,
+  HttpApi,
+  HttpMethod,
+  HttpStage,
   DomainName,
   IDomainName,
-  BasePathMapping,
-  SecurityPolicy,
-} from "aws-cdk-lib/aws-apigateway";
+  ApiMapping,
+  PayloadFormatVersion,
+  LogGroupLogDestination,
+} from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Function as LambdaFunction } from "aws-cdk-lib/aws-lambda";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
@@ -18,11 +19,13 @@ import {
   HostedZone,
   IHostedZone,
 } from "aws-cdk-lib/aws-route53";
-import { ApiGatewayDomain } from "aws-cdk-lib/aws-route53-targets";
+import { ApiGatewayv2DomainProperties } from "aws-cdk-lib/aws-route53-targets";
 import { Alarm, TreatMissingData } from "aws-cdk-lib/aws-cloudwatch";
 import { SnsAction } from "aws-cdk-lib/aws-cloudwatch-actions";
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import { AccessLogFormat } from "aws-cdk-lib/aws-apigateway";
 
 export interface ApiGatewayStackProps extends StackProps {
   environment: string;
@@ -57,7 +60,7 @@ export interface ApiGatewayStackProps extends StackProps {
 }
 
 export class ApiGatewayStack extends Stack {
-  public readonly restApi: RestApi;
+  public readonly httpApi: HttpApi;
   public readonly customDomain: IDomainName;
   public readonly dnsRecord?: ARecord;
   public readonly apiAlertTopic: Topic;
@@ -92,35 +95,65 @@ export class ApiGatewayStack extends Stack {
       lambdaFunctionName,
     );
 
-    // Create REST API with regional endpoint
-    this.restApi = new RestApi(this, "RestApi", {
-      restApiName: `${projectName}-telegram-bot-api-${environment}`,
+    // Create HTTP API (v2) with no default stage
+    this.httpApi = new HttpApi(this, "HttpApi", {
+      apiName: `${projectName}-telegram-bot-api-${environment}`,
       description: `Telegram bot API Gateway for ${environment}`,
-      endpointConfiguration: {
-        types: [EndpointType.REGIONAL],
-      },
+      createDefaultStage: false,
       disableExecuteApiEndpoint: true,
-      deployOptions: {
-        stageName: environment,
-        throttlingRateLimit: rateLimit,
-        throttlingBurstLimit: burstLimit,
-        loggingLevel: MethodLoggingLevel.INFO,
-        dataTraceEnabled: false,
-        metricsEnabled: true,
-      },
     });
 
-    // Create the webhook listener resource and POST method
-    const listenerResource = this.restApi.root.addResource(
-      "qlibin-assistant-listener",
+    // Create Lambda integration with v1 payload format for backwards compatibility
+    const lambdaIntegration = new HttpLambdaIntegration(
+      "WebhookIntegration",
+      lambdaFunction,
+      {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+        timeout: Duration.seconds(29),
+      },
     );
 
-    const lambdaIntegration = new LambdaIntegration(lambdaFunction, {
-      proxy: true,
-      timeout: Duration.seconds(29),
+    // Add POST route for the webhook listener
+    this.httpApi.addRoutes({
+      path: "/qlibin-assistant-listener",
+      methods: [HttpMethod.POST],
+      integration: lambdaIntegration,
     });
 
-    listenerResource.addMethod("POST", lambdaIntegration);
+    // Access log group for the stage
+    const accessLogGroup = new LogGroup(this, "ApiAccessLogGroup", {
+      logGroupName: `/aws/apigateway/${stackName}-http-api`,
+      retention: RetentionDays.ONE_MONTH,
+    });
+
+    // Create explicit stage with throttling, metrics, and access logging
+    const stage = new HttpStage(this, "HttpStage", {
+      httpApi: this.httpApi,
+      stageName: environment,
+      autoDeploy: true,
+      throttle: {
+        rateLimit,
+        burstLimit,
+      },
+      detailedMetricsEnabled: true,
+      accessLogSettings: {
+        destination: new LogGroupLogDestination(accessLogGroup),
+        format: AccessLogFormat.custom(
+          JSON.stringify({
+            requestId: "$context.requestId",
+            ip: "$context.identity.sourceIp",
+            requestTime: "$context.requestTime",
+            httpMethod: "$context.httpMethod",
+            routeKey: "$context.routeKey",
+            status: "$context.status",
+            protocol: "$context.protocol",
+            responseLength: "$context.responseLength",
+            integrationError: "$context.integrationErrorMessage",
+            errorMessage: "$context.error.message",
+          }),
+        ),
+      },
+    });
 
     // Custom domain: import existing or create new
     if (
@@ -132,9 +165,9 @@ export class ApiGatewayStack extends Stack {
         this,
         "CustomDomain",
         {
-          domainName: domainName,
-          domainNameAliasTarget: existingDomainRegionalDomainName,
-          domainNameAliasHostedZoneId: existingDomainRegionalHostedZoneId,
+          name: domainName,
+          regionalDomainName: existingDomainRegionalDomainName,
+          regionalHostedZoneId: existingDomainRegionalHostedZoneId,
         },
       );
     } else {
@@ -148,17 +181,15 @@ export class ApiGatewayStack extends Stack {
       this.customDomain = new DomainName(this, "CustomDomain", {
         domainName: domainName,
         certificate: certificate,
-        endpointType: EndpointType.REGIONAL,
-        securityPolicy: SecurityPolicy.TLS_1_2,
       });
     }
 
-    // Base path mapping
-    new BasePathMapping(this, "BasePathMapping", {
+    // API mapping (replaces BasePathMapping)
+    new ApiMapping(this, "ApiMapping", {
+      api: this.httpApi,
       domainName: this.customDomain,
-      restApi: this.restApi,
-      basePath: basePath,
-      stage: this.restApi.deploymentStage,
+      stage: stage,
+      apiMappingKey: basePath,
     });
 
     // DNS record: only create if requested and domain was created (not imported)
@@ -176,7 +207,10 @@ export class ApiGatewayStack extends Stack {
         zone: hostedZone,
         recordName: domainName,
         target: RecordTarget.fromAlias(
-          new ApiGatewayDomain(this.customDomain as DomainName),
+          new ApiGatewayv2DomainProperties(
+            this.customDomain.regionalDomainName,
+            this.customDomain.regionalHostedZoneId,
+          ),
         ),
       });
     }
@@ -191,7 +225,7 @@ export class ApiGatewayStack extends Stack {
     const error5xxAlarm = new Alarm(this, "Api5XXErrorAlarm", {
       alarmName: `${stackName}-api-5xx-errors`,
       alarmDescription: "API Gateway 5XX errors detected",
-      metric: this.restApi.metricServerError({
+      metric: this.httpApi.metricServerError({
         period: Duration.minutes(5),
         statistic: "Sum",
       }),
@@ -203,7 +237,7 @@ export class ApiGatewayStack extends Stack {
     const latencyAlarm = new Alarm(this, "ApiLatencyAlarm", {
       alarmName: `${stackName}-api-latency`,
       alarmDescription: "API Gateway latency exceeds threshold",
-      metric: this.restApi.metricLatency({
+      metric: this.httpApi.metricLatency({
         period: Duration.minutes(5),
         statistic: "p95",
       }),
@@ -224,23 +258,23 @@ export class ApiGatewayStack extends Stack {
     const sourceArn = Arn.format(
       {
         service: "execute-api",
-        resource: this.restApi.restApiId,
+        resource: this.httpApi.apiId,
         resourceName: "*",
       },
       this,
     );
 
     // SSM Parameter exports
-    new StringParameter(this, "RestApiId", {
-      parameterName: `/automation/${environment}/api-gateway/rest-api-id`,
-      stringValue: this.restApi.restApiId,
-      description: "REST API ID for API Gateway",
+    new StringParameter(this, "ApiId", {
+      parameterName: `/automation/${environment}/api-gateway/id`,
+      stringValue: this.httpApi.apiId,
+      description: "HTTP API ID for API Gateway",
     });
 
-    new StringParameter(this, "RestApiUrl", {
-      parameterName: `/automation/${environment}/api-gateway/rest-api-url`,
-      stringValue: this.restApi.url,
-      description: "REST API URL (execute-api endpoint)",
+    new StringParameter(this, "ApiUrl", {
+      parameterName: `/automation/${environment}/api-gateway/url`,
+      stringValue: stage.url,
+      description: "HTTP API URL (execute-api endpoint)",
     });
 
     new StringParameter(this, "DomainNameParam", {

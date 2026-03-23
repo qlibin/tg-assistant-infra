@@ -89,7 +89,6 @@ if (
       existingDomainRegionalDomainName: envCfg.existingDomainRegionalDomainName,
       existingDomainRegionalHostedZoneId:
         envCfg.existingDomainRegionalHostedZoneId,
-      createDnsRecord: false, // DNS record already exists for tg.qlibin.com
       tags: envCfg.tags ?? {},
     },
   );

@@ -83,8 +83,8 @@ describe("ApiGateway Stack", () => {
       const stack = makeStackWithImportedDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
-      // Assert - no DomainName resource created
-      template.resourceCountIs("AWS::ApiGateway::DomainName", 0);
+      // Assert - no DomainName resource created (v2)
+      template.resourceCountIs("AWS::ApiGatewayV2::DomainName", 0);
     });
 
     test("does NOT create Route53 record when importing domain", () => {
@@ -96,34 +96,35 @@ describe("ApiGateway Stack", () => {
       template.resourceCountIs("AWS::Route53::RecordSet", 0);
     });
 
-    test("creates base path mapping referencing imported domain", () => {
+    test("creates API mapping referencing imported domain", () => {
       // Arrange
       const stack = makeStackWithImportedDomain({ envName: "test" });
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::BasePathMapping", {
-        BasePath: "test",
+      template.hasResourceProperties("AWS::ApiGatewayV2::ApiMapping", {
+        ApiMappingKey: "test",
         DomainName: "tg.qlibin.com",
       });
     });
   });
 
   describe("with new custom domain (greenfield scenario)", () => {
-    test("creates custom domain with certificate ARN and TLS 1.2", () => {
+    test("creates custom domain with certificate ARN", () => {
       // Arrange
       const stack = makeStackWithNewDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::DomainName", {
+      template.hasResourceProperties("AWS::ApiGatewayV2::DomainName", {
         DomainName: "tg.qlibin.com",
-        RegionalCertificateArn:
-          "arn:aws:acm:eu-central-1:123456789012:certificate/test-cert-id",
-        EndpointConfiguration: {
-          Types: ["REGIONAL"],
-        },
-        SecurityPolicy: "TLS_1_2",
+        DomainNameConfigurations: Match.arrayWith([
+          Match.objectLike({
+            CertificateArn:
+              "arn:aws:acm:eu-central-1:123456789012:certificate/test-cert-id",
+            EndpointType: "REGIONAL",
+          }),
+        ]),
       });
     });
 
@@ -145,63 +146,87 @@ describe("ApiGateway Stack", () => {
   });
 
   describe("common resources (both scenarios)", () => {
-    test("creates REST API with regional endpoint and execute-api disabled", () => {
+    test("creates HTTP API with execute-api disabled", () => {
       // Arrange
       const stack = makeStackWithImportedDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::RestApi", {
+      template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
         Name: "tg-assistant-telegram-bot-api-dev",
-        EndpointConfiguration: {
-          Types: ["REGIONAL"],
-        },
+        ProtocolType: "HTTP",
         DisableExecuteApiEndpoint: true,
       });
     });
 
-    test("creates POST method with Lambda integration and AWS_PROXY", () => {
-      // Arrange
-      const stack = makeStackWithImportedDomain({ envName: "dev" });
-      const template = Template.fromStack(stack);
-
-      // Assert - Method exists
-      template.hasResourceProperties("AWS::ApiGateway::Method", {
-        HttpMethod: "POST",
-        Integration: {
-          Type: "AWS_PROXY",
-          IntegrationHttpMethod: "POST",
-          TimeoutInMillis: 29000,
-        },
-      });
-    });
-
-    test("creates stage with throttling settings (10 rate, 25 burst)", () => {
+    test("creates POST route with Lambda integration", () => {
       // Arrange
       const stack = makeStackWithImportedDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::Stage", {
+      template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+        RouteKey: "POST /qlibin-assistant-listener",
+      });
+
+      template.hasResourceProperties("AWS::ApiGatewayV2::Integration", {
+        IntegrationType: "AWS_PROXY",
+        PayloadFormatVersion: "1.0",
+        TimeoutInMillis: 29000,
+      });
+    });
+
+    test("creates stage with throttling settings (10 rate, 25 burst) and auto-deploy", () => {
+      // Arrange
+      const stack = makeStackWithImportedDomain({ envName: "dev" });
+      const template = Template.fromStack(stack);
+
+      // Assert
+      template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
         StageName: "dev",
-        MethodSettings: Match.arrayWith([
-          Match.objectLike({
-            ThrottlingRateLimit: 10,
-            ThrottlingBurstLimit: 25,
-            LoggingLevel: "INFO",
-          }),
-        ]),
+        AutoDeploy: true,
+        DefaultRouteSettings: Match.objectLike({
+          ThrottlingRateLimit: 10,
+          ThrottlingBurstLimit: 25,
+          DetailedMetricsEnabled: true,
+        }),
       });
     });
 
-    test("creates base path mapping for environment", () => {
+    test("creates API mapping for environment", () => {
       // Arrange
       const stack = makeStackWithImportedDomain({ envName: "dev" });
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::BasePathMapping", {
-        BasePath: "dev",
+      template.hasResourceProperties("AWS::ApiGatewayV2::ApiMapping", {
+        ApiMappingKey: "dev",
+      });
+    });
+
+    test("creates access log group with one month retention", () => {
+      // Arrange
+      const stack = makeStackWithImportedDomain({ envName: "dev" });
+      const template = Template.fromStack(stack);
+
+      // Assert
+      template.hasResourceProperties("AWS::Logs::LogGroup", {
+        LogGroupName: "/aws/apigateway/tg-assistant-dev-http-api",
+        RetentionInDays: 30,
+      });
+    });
+
+    test("configures access logging on the stage", () => {
+      // Arrange
+      const stack = makeStackWithImportedDomain({ envName: "dev" });
+      const template = Template.fromStack(stack);
+
+      // Assert
+      template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+        AccessLogSettings: Match.objectLike({
+          DestinationArn: Match.anyValue(),
+          Format: Match.anyValue(),
+        }),
       });
     });
 
@@ -211,8 +236,8 @@ describe("ApiGateway Stack", () => {
       const template = Template.fromStack(stack);
 
       const paramNames = [
-        "/automation/dev/api-gateway/rest-api-id",
-        "/automation/dev/api-gateway/rest-api-url",
+        "/automation/dev/api-gateway/id",
+        "/automation/dev/api-gateway/url",
         "/automation/dev/api-gateway/domain-name",
         "/automation/dev/api-gateway/stage-name",
         "/automation/dev/api-gateway/source-arn",
@@ -272,14 +297,12 @@ describe("ApiGateway Stack", () => {
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::Stage", {
+      template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
         StageName: "test",
-        MethodSettings: Match.arrayWith([
-          Match.objectLike({
-            ThrottlingRateLimit: 20,
-            ThrottlingBurstLimit: 50,
-          }),
-        ]),
+        DefaultRouteSettings: Match.objectLike({
+          ThrottlingRateLimit: 20,
+          ThrottlingBurstLimit: 50,
+        }),
       });
     });
 
@@ -289,12 +312,12 @@ describe("ApiGateway Stack", () => {
       const template = Template.fromStack(stack);
 
       // Assert
-      template.hasResourceProperties("AWS::ApiGateway::RestApi", {
+      template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
         Name: "tg-assistant-telegram-bot-api-test",
       });
 
       template.hasResourceProperties("AWS::SSM::Parameter", {
-        Name: "/automation/test/api-gateway/rest-api-id",
+        Name: "/automation/test/api-gateway/id",
       });
 
       template.hasResourceProperties("AWS::CloudWatch::Alarm", {
