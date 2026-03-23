@@ -1,17 +1,13 @@
-import { Duration, Stack, StackProps, Arn } from "aws-cdk-lib";
+import { Duration, Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
   HttpApi,
-  HttpMethod,
   HttpStage,
   DomainName,
   IDomainName,
   ApiMapping,
-  PayloadFormatVersion,
   LogGroupLogDestination,
 } from "aws-cdk-lib/aws-apigatewayv2";
-import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { Function as LambdaFunction } from "aws-cdk-lib/aws-lambda";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
   ARecord,
@@ -30,7 +26,6 @@ import { AccessLogFormat } from "aws-cdk-lib/aws-apigateway";
 export interface ApiGatewayStackProps extends StackProps {
   environment: string;
   projectName: string;
-  lambdaFunctionName: string;
   certificateArn: string;
   hostedZoneId: string;
   hostedZoneName: string;
@@ -72,7 +67,6 @@ export class ApiGatewayStack extends Stack {
     const {
       environment,
       projectName,
-      lambdaFunctionName,
       certificateArn,
       hostedZoneId,
       hostedZoneName,
@@ -88,36 +82,13 @@ export class ApiGatewayStack extends Stack {
     const rateLimit = throttling?.rateLimit ?? 10;
     const burstLimit = throttling?.burstLimit ?? 25;
 
-    // Import the existing Lambda function by name
-    const lambdaFunction = LambdaFunction.fromFunctionName(
-      this,
-      "WebhookLambda",
-      lambdaFunctionName,
-    );
-
     // Create HTTP API (v2) with no default stage
+    // Consumer projects attach their own routes via SSM-exported identifiers
     this.httpApi = new HttpApi(this, "HttpApi", {
       apiName: `${projectName}-telegram-bot-api-${environment}`,
       description: `Telegram bot API Gateway for ${environment}`,
       createDefaultStage: false,
       disableExecuteApiEndpoint: true,
-    });
-
-    // Create Lambda integration with v1 payload format for backwards compatibility
-    const lambdaIntegration = new HttpLambdaIntegration(
-      "WebhookIntegration",
-      lambdaFunction,
-      {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-        timeout: Duration.seconds(29),
-      },
-    );
-
-    // Add POST route for the webhook listener
-    this.httpApi.addRoutes({
-      path: "/qlibin-assistant-listener",
-      methods: [HttpMethod.POST],
-      integration: lambdaIntegration,
     });
 
     // Access log group for the stage
@@ -254,16 +225,6 @@ export class ApiGatewayStack extends Stack {
       alarm.addOkAction(new SnsAction(this.apiAlertTopic));
     });
 
-    // Build API Gateway source ARN for Lambda permissions
-    const sourceArn = Arn.format(
-      {
-        service: "execute-api",
-        resource: this.httpApi.apiId,
-        resourceName: "*",
-      },
-      this,
-    );
-
     // SSM Parameter exports
     new StringParameter(this, "ApiId", {
       parameterName: `/automation/${environment}/api-gateway/id`,
@@ -287,13 +248,6 @@ export class ApiGatewayStack extends Stack {
       parameterName: `/automation/${environment}/api-gateway/stage-name`,
       stringValue: environment,
       description: "API Gateway stage name",
-    });
-
-    new StringParameter(this, "SourceArn", {
-      parameterName: `/automation/${environment}/api-gateway/source-arn`,
-      stringValue: sourceArn,
-      description:
-        "API Gateway source ARN for Lambda resource-based permissions",
     });
   }
 }
