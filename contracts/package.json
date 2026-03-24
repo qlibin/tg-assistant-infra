@@ -1,0 +1,47 @@
+{
+  "name": "@qlibin/tg-assistant-contracts",
+  "version": "1.0.0",
+  "description": "Shared message schemas and TypeScript types for tg-assistant SQS queues",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "schemas/"
+  ],
+  "scripts": {
+    "generate-schemas": "tsx scripts/generate-json-schemas.ts",
+    "prebuild": "npm run generate-schemas",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/ test/ scripts/",
+    "lint:fix": "eslint src/ test/ scripts/ --fix",
+    "format": "prettier --write src/ test/ scripts/",
+    "format:check": "prettier --check src/ test/ scripts/",
+    "test": "jest --coverage",
+    "validate": "npm run build && npm run lint && npm run format:check && npm run type-check && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qlibin/tg-assistant-infra.git",
+    "directory": "contracts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "eslint": "^10.0.0",
+    "globals": "^17.4.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "zod-to-json-schema": "^3.24.0"
+  }
+}

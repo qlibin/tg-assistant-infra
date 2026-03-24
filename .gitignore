@@ -77,4 +77,9 @@ pids/
 
 # CDK output
 infrastructure/cdk.out
+
+# Contracts build artifacts
+contracts/dist/
+contracts/schemas/*.schema.json
+contracts/coverage/
 /tg-assistant-infra.iml

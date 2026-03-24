@@ -7,6 +7,9 @@ on:
       - "infrastructure/**"
       - "!infrastructure/test/**"
       - "!infrastructure/**/*.md"
+      - "contracts/**"
+      - "!contracts/test/**"
+      - "!contracts/**/*.md"
       - ".github/workflows/cd.yml"
 concurrency:
   group: pa-${{ github.ref_name }}
