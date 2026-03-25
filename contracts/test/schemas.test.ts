@@ -113,10 +113,13 @@ describe("OrderMessageSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects additional properties", () => {
+  it("strips unknown properties for forward compatibility", () => {
     const msg = { ...validOrderMessage(), extraField: "nope" };
     const result = OrderMessageSchema.safeParse(msg);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("extraField");
+    }
   });
 
   it("rejects invalid retryPolicy backoffMultiplier", () => {
@@ -212,19 +215,25 @@ describe("ResultMessageSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects additional properties", () => {
+  it("strips unknown properties for forward compatibility", () => {
     const msg = { ...validResultMessage(), extraField: "nope" };
     const result = ResultMessageSchema.safeParse(msg);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("extraField");
+    }
   });
 
-  it("rejects additional properties in queueMetrics", () => {
+  it("strips unknown properties in queueMetrics for forward compatibility", () => {
     const msg = {
       ...validResultMessage(),
       queueMetrics: { queueTime: 100, extra: true },
     };
     const result = ResultMessageSchema.safeParse(msg);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.queueMetrics).not.toHaveProperty("extra");
+    }
   });
 });
 

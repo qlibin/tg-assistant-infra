@@ -59,12 +59,12 @@ Processing results sent to the Result Queue for feedback handling.
 
 ### Shared enums
 
-| Export | Values |
-|--------|--------|
-| `TaskType` | `playwright-scraping`, `url-monitoring`, `web-automation`, `perplexity-summary`, `content-analysis`, `text-processing`, `scheduled-linkedin`, `scheduled-german`, `system-health` |
-| `Priority` | `low`, `normal`, `high`, `critical` |
-| `Status` | `success`, `failure`, `partial`, `timeout`, `rate-limited`, `cancelled` |
-| `FollowUpAction` | `notify`, `requeue`, `enhance`, `escalate`, `archive` |
+| Export           | Values                                                                                                                                                                            |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TaskType`       | `playwright-scraping`, `url-monitoring`, `web-automation`, `perplexity-summary`, `content-analysis`, `text-processing`, `scheduled-linkedin`, `scheduled-german`, `system-health` |
+| `Priority`       | `low`, `normal`, `high`, `critical`                                                                                                                                               |
+| `Status`         | `success`, `failure`, `partial`, `timeout`, `rate-limited`, `cancelled`                                                                                                           |
+| `FollowUpAction` | `notify`, `requeue`, `enhance`, `escalate`, `archive`                                                                                                                             |
 
 ## JSON Schema files
 
