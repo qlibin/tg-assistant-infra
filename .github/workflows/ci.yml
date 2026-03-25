@@ -19,7 +19,29 @@ env:
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
 
 jobs:
-  build-validate-test:
+  validate-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install contracts dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Contracts Validate
+        working-directory: contracts
+        run: npm run validate
+
+  validate-infrastructure:
     runs-on: ubuntu-latest
     environment: dev
 
@@ -100,3 +122,19 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
+
+  # Summary job for branch protection — use this as the required status check
+  # so individual job names can change without updating branch protection rules.
+  build-validate-test:
+    runs-on: ubuntu-latest
+    needs: [validate-contracts, validate-infrastructure]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ needs.validate-contracts.result }}" != "success" ] || \
+             [ "${{ needs.validate-infrastructure.result }}" != "success" ]; then
+            echo "One or more validation jobs failed"
+            exit 1
+          fi
+          echo "All validation jobs passed"

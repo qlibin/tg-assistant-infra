@@ -1,6 +1,58 @@
 # Root project checks
 echo "🔍 Running pre-commit checks..."
 
+# Contracts guardrails
+if [ ! -d "contracts" ]; then
+  echo "❌ 'contracts' directory not found at repo root"
+  exit 1
+fi
+
+echo "📦 Running contracts guardrails..."
+cd contracts || { echo "❌ Failed to enter contracts directory"; exit 1; }
+
+# Build
+echo "▶ Build (contracts)"
+npm run --silent build
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed (contracts)"
+  exit 1
+fi
+
+# Type-check
+echo "▶ Type-check (contracts)"
+npm run --silent type-check
+if [ $? -ne 0 ]; then
+  echo "❌ Type-check failed (contracts)"
+  exit 1
+fi
+
+# Lint
+echo "▶ Lint (contracts)"
+npm run --silent lint
+if [ $? -ne 0 ]; then
+  echo "❌ Lint failed (contracts)"
+  exit 1
+fi
+
+# Format check
+echo "▶ Format check (contracts)"
+npm run --silent format:check
+if [ $? -ne 0 ]; then
+  echo "❌ Format check failed (contracts)"
+  exit 1
+fi
+
+# Tests
+echo "▶ Tests (contracts)"
+npm run --silent test
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed (contracts)"
+  exit 1
+fi
+
+echo "✅ Contracts guardrails passed!"
+cd ..
+
 # Infrastructure guardrails
 if [ ! -d "infrastructure" ]; then
   echo "❌ 'infrastructure' directory not found at repo root"

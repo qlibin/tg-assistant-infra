@@ -8,7 +8,18 @@ AWS CDK infrastructure for a personal assistant Telegram bot. The infrastructure
 
 ## Commands
 
-All commands run from `infrastructure/` directory:
+### Contracts (`contracts/` directory)
+
+```bash
+npm run build          # Generate JSON schemas + TypeScript compilation
+npm run lint           # ESLint validation
+npm run format         # Format with Prettier
+npm run format:check   # Check formatting
+npm run test           # Run tests with coverage
+npm run validate       # Full validation (build + lint + format + type-check + test)
+```
+
+### Infrastructure (`infrastructure/` directory)
 
 ```bash
 npm run build          # TypeScript compilation
@@ -29,6 +40,19 @@ npm run deploy         # Deploy stack
 **AWS Profile:** Use `aws-course` for CDK and AWS CLI commands.
 
 ## Architecture
+
+### Contracts Package (`contracts/`)
+
+`@qlibin/tg-assistant-contracts` — shared Zod schemas and TypeScript types for SQS message formats. Published to npm public registry.
+
+- **Zod as single source of truth**: schemas define both TypeScript types (`z.infer<>`) and generate JSON Schema files at build time via `zod-to-json-schema`.
+- **Shared enums**: `TaskType` (9 values), `Priority` (4 values) used by both `OrderMessageSchema` and `ResultMessageSchema`.
+- **Publishing**: Uses OIDC Trusted Publishing (no secrets needed). To publish a new version:
+  1. Bump `version` in `contracts/package.json`
+  2. Commit the version bump
+  3. Tag: `git tag contracts-v<version>` (e.g., `git tag contracts-v1.1.0`)
+  4. Push: `git push origin contracts-v<version>`
+  5. The `.github/workflows/publish-contracts.yml` workflow validates, verifies the tag matches `package.json`, and publishes to npmjs.com with provenance.
 
 ### SQS Stack (`infrastructure/lib/sqs-stack.ts`)
 

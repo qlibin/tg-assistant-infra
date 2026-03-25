@@ -1,0 +1,50 @@
+name: Publish Contracts
+
+on:
+  push:
+    tags: [ "contracts-v*" ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Validate
+        working-directory: contracts
+        run: npm run validate
+
+      - name: Verify tag matches package version
+        working-directory: contracts
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#contracts-v}"
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+          echo "✅ Tag version matches package.json version: $PACKAGE_VERSION"
+
+      - name: Publish to npm
+        working-directory: contracts
+        # Auth handled by OIDC Trusted Publishing — no NPM_TOKEN needed.
+        # Configured at npmjs.com package settings → Trusted Publishers.
+        run: npm publish --provenance --access public
