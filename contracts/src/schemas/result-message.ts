@@ -49,13 +49,13 @@ export const ResultMessageSchema = z.object({
   result: ResultDataSchema,
   processingTime: z.number(),
   timestamp: z.string().datetime(),
-  userId: z.string(),
+  userId: z.string().min(1),
   followUpAction: FollowUpActionSchema.optional(),
   priority: PrioritySchema.optional(),
   retryCount: z.number().int().min(0).max(3).optional(),
   cost: z.number().min(0).optional(),
   queueMetrics: QueueMetricsSchema.optional(),
-  schemaVersion: z.literal(SCHEMA_VERSION).optional(),
+  schemaVersion: z.literal(SCHEMA_VERSION),
 });
 
 export type ResultMessage = z.infer<typeof ResultMessageSchema>;

@@ -21,6 +21,7 @@ function validOrderMessage(): OrderMessage {
     payload: { url: "https://example.com" },
     userId: "12345",
     timestamp: new Date().toISOString(),
+    schemaVersion: SCHEMA_VERSION,
   };
 }
 
@@ -33,6 +34,7 @@ function validResultMessage(): ResultMessage {
     processingTime: 1500,
     timestamp: new Date().toISOString(),
     userId: "12345",
+    schemaVersion: SCHEMA_VERSION,
   };
 }
 
@@ -68,6 +70,13 @@ describe("OrderMessageSchema", () => {
 
   it("rejects missing required fields", () => {
     const result = OrderMessageSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing schemaVersion", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { schemaVersion, ...msg } = validOrderMessage();
+    const result = OrderMessageSchema.safeParse(msg);
     expect(result.success).toBe(false);
   });
 
@@ -176,6 +185,19 @@ describe("ResultMessageSchema", () => {
 
   it("rejects missing required fields", () => {
     const result = ResultMessageSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty userId", () => {
+    const msg = { ...validResultMessage(), userId: "" };
+    const result = ResultMessageSchema.safeParse(msg);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing schemaVersion", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { schemaVersion, ...msg } = validResultMessage();
+    const result = ResultMessageSchema.safeParse(msg);
     expect(result.success).toBe(false);
   });
 

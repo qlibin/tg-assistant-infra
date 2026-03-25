@@ -18,6 +18,7 @@ import {
   OrderMessageSchema,   // Zod schema (runtime validation)
   ResultMessage,
   ResultMessageSchema,
+  SCHEMA_VERSION,
 } from "@qlibin/tg-assistant-contracts";
 
 // Type-safe message construction
@@ -27,6 +28,7 @@ const order: OrderMessage = {
   payload: { url: "https://example.com" },
   userId: "12345",
   timestamp: new Date().toISOString(),
+  schemaVersion: SCHEMA_VERSION,
 };
 
 // Runtime validation (e.g., when consuming from SQS)
@@ -45,17 +47,17 @@ if (!result.success) {
 
 Messages sent to the Order Queue for worker processing.
 
-**Required fields:** `orderId`, `taskType`, `payload`, `userId`, `timestamp`
+**Required fields:** `orderId`, `taskType`, `payload`, `userId`, `timestamp`, `schemaVersion`
 
-**Optional fields:** `priority`, `retryCount`, `deduplicationId`, `correlationId`, `schemaVersion`
+**Optional fields:** `priority`, `retryCount`, `deduplicationId`, `correlationId`
 
 ### ResultMessage
 
 Processing results sent to the Result Queue for feedback handling.
 
-**Required fields:** `orderId`, `taskType`, `status`, `result`, `processingTime`, `timestamp`, `userId`
+**Required fields:** `orderId`, `taskType`, `status`, `result`, `processingTime`, `timestamp`, `userId`, `schemaVersion`
 
-**Optional fields:** `correlationId`, `followUpAction`, `priority`, `retryCount`, `cost`, `queueMetrics`, `schemaVersion`
+**Optional fields:** `correlationId`, `followUpAction`, `priority`, `retryCount`, `cost`, `queueMetrics`
 
 ### Shared enums
 
