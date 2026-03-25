@@ -45,4 +45,6 @@ jobs:
 
       - name: Publish to npm
         working-directory: contracts
+        # Auth handled by OIDC Trusted Publishing — no NPM_TOKEN needed.
+        # Configured at npmjs.com package settings → Trusted Publishers.
         run: npm publish --provenance --access public
