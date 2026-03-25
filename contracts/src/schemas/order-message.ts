@@ -24,7 +24,7 @@ export const OrderMessageSchema = z.object({
   retryCount: z.number().int().min(0).max(3).optional(),
   deduplicationId: z.string().max(128).optional(),
   correlationId: z.string().optional(),
-  schemaVersion: z.literal(SCHEMA_VERSION).optional(),
+  schemaVersion: z.literal(SCHEMA_VERSION),
 });
 
 export type OrderMessage = z.infer<typeof OrderMessageSchema>;

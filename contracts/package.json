@@ -1,6 +1,6 @@
 {
   "name": "@qlibin/tg-assistant-contracts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared message schemas and TypeScript types for tg-assistant SQS queues",
   "type": "module",
   "main": "dist/index.js",
