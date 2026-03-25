@@ -47,7 +47,12 @@ npm run deploy         # Deploy stack
 
 - **Zod as single source of truth**: schemas define both TypeScript types (`z.infer<>`) and generate JSON Schema files at build time via `zod-to-json-schema`.
 - **Shared enums**: `TaskType` (9 values), `Priority` (4 values) used by both `OrderMessageSchema` and `ResultMessageSchema`.
-- **Publishing**: Tag `contracts-v*` triggers `.github/workflows/publish-contracts.yml`. Requires `NPM_TOKEN` secret.
+- **Publishing**: Uses OIDC Trusted Publishing (no secrets needed). To publish a new version:
+  1. Bump `version` in `contracts/package.json`
+  2. Commit the version bump
+  3. Tag: `git tag contracts-v<version>` (e.g., `git tag contracts-v1.1.0`)
+  4. Push: `git push origin contracts-v<version>`
+  5. The `.github/workflows/publish-contracts.yml` workflow validates, verifies the tag matches `package.json`, and publishes to npmjs.com with provenance.
 
 ### SQS Stack (`infrastructure/lib/sqs-stack.ts`)
 
