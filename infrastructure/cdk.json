@@ -3,43 +3,28 @@
   "context": {
     "environments": {
       "dev": {
-        "account": "182399716679",
         "region": "eu-central-1",
         "envName": "dev",
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "dev"
-        },
-        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
-        "hostedZoneId": "Z0063833342G11THSVYEP",
-        "hostedZoneName": "qlibin.com",
-        "domainName": "tg.qlibin.com"
+        }
       },
       "test": {
-        "account": "182399716679",
         "region": "eu-central-1",
         "envName": "test",
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "test"
-        },
-        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
-        "hostedZoneId": "Z0063833342G11THSVYEP",
-        "hostedZoneName": "qlibin.com",
-        "domainName": "tg.qlibin.com"
+        }
       },
       "prod": {
-        "account": "182399716679",
         "region": "eu-central-1",
         "envName": "prod",
         "tags": {
           "app": "telegram-assistant-infra",
           "env": "prod"
-        },
-        "certificateArn": "arn:aws:acm:eu-central-1:182399716679:certificate/e3271269-1fb8-4ac5-aaaa-ff585845602c",
-        "hostedZoneId": "Z0063833342G11THSVYEP",
-        "hostedZoneName": "qlibin.com",
-        "domainName": "tg.qlibin.com"
+        }
       }
     },
     "defaultEnvironment": "dev"

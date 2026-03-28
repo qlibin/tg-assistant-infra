@@ -5,14 +5,9 @@ import { SQSStack } from "../lib/sqs-stack.js";
 import { ApiGatewayStack } from "../lib/api-gateway-stack.js";
 
 interface EnvConfig {
-  account: string;
   region: string;
   envName: string;
   tags?: Record<string, string>;
-  certificateArn?: string;
-  hostedZoneId?: string;
-  hostedZoneName?: string;
-  domainName?: string;
   existingDomainRegionalDomainName?: string;
   existingDomainRegionalHostedZoneId?: string;
 }
@@ -46,16 +41,23 @@ if (!envCfg) {
   );
 }
 
-// Optional account sanity check if AWS_ACCOUNT_ID is provided in environment
-const providedAccountId = process.env.AWS_ACCOUNT_ID;
-if (providedAccountId && providedAccountId !== envCfg.account) {
+// AWS Account ID: required from environment variable
+const account = process.env.AWS_ACCOUNT_ID;
+if (!account) {
   throw new Error(
-    `AWS account mismatch: AWS_ACCOUNT_ID=${providedAccountId} does not match CDK context account=${envCfg.account} for environment '${resolvedEnvName}'.`,
+    "AWS_ACCOUNT_ID environment variable is required. " +
+      "Set it in your shell or .env file for local development.",
   );
 }
 
+// Domain configuration: from environment variables (optional — ApiGateway stack only created when all present)
+const certificateArn = process.env.CERTIFICATE_ARN;
+const hostedZoneId = process.env.HOSTED_ZONE_ID;
+const hostedZoneName = process.env.HOSTED_ZONE_NAME;
+const domainName = process.env.DOMAIN_NAME;
+
 const sqsStack = new SQSStack(app, `DualQueueMessageStack-${envCfg.envName}`, {
-  env: { account: envCfg.account, region: envCfg.region },
+  env: { account, region: envCfg.region },
   description: `Dual SQS queues for TG Assistant (${envCfg.envName})`,
   environment: envCfg.envName,
   projectName: "tg-assistant",
@@ -65,25 +67,20 @@ const sqsStack = new SQSStack(app, `DualQueueMessageStack-${envCfg.envName}`, {
 cdk.Tags.of(sqsStack).add("app", "telegram-webhook");
 cdk.Tags.of(sqsStack).add("env", envCfg.envName);
 
-// API Gateway Stack (only if configuration is available)
-if (
-  envCfg.certificateArn &&
-  envCfg.hostedZoneId &&
-  envCfg.hostedZoneName &&
-  envCfg.domainName
-) {
+// API Gateway Stack (only if domain configuration is available via env vars)
+if (certificateArn && hostedZoneId && hostedZoneName && domainName) {
   const apiGatewayStack = new ApiGatewayStack(
     app,
     `ApiGatewayStack-${envCfg.envName}`,
     {
-      env: { account: envCfg.account, region: envCfg.region },
+      env: { account, region: envCfg.region },
       description: `API Gateway for TG Assistant (${envCfg.envName})`,
       environment: envCfg.envName,
       projectName: "tg-assistant",
-      certificateArn: envCfg.certificateArn,
-      hostedZoneId: envCfg.hostedZoneId,
-      hostedZoneName: envCfg.hostedZoneName,
-      domainName: envCfg.domainName,
+      certificateArn,
+      hostedZoneId,
+      hostedZoneName,
+      domainName,
       basePath: envCfg.envName,
       existingDomainRegionalDomainName: envCfg.existingDomainRegionalDomainName,
       existingDomainRegionalHostedZoneId:
