@@ -2,17 +2,14 @@ import { z } from "zod";
 
 export const SCHEMA_VERSION = "1.0.0" as const;
 
-export const TaskTypeSchema = z.enum([
-  "playwright-scraping",
-  "url-monitoring",
-  "web-automation",
-  "perplexity-summary",
-  "content-analysis",
-  "text-processing",
-  "scheduled-linkedin",
-  "scheduled-german",
-  "system-health",
-]);
+export const TaskTypeSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(
+    /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/,
+    "Task type must be kebab-case (e.g. 'web-scraping', 'text-processing')",
+  );
 
 export type TaskType = z.infer<typeof TaskTypeSchema>;
 
