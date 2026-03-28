@@ -16,9 +16,9 @@ describe("ApiGateway Stack", () => {
     projectName: "tg-assistant",
     certificateArn:
       "arn:aws:acm:eu-central-1:123456789012:certificate/test-cert-id",
-    hostedZoneId: "Z0063833342G11THSVYEP",
-    hostedZoneName: "qlibin.com",
-    domainName: "tg.qlibin.com",
+    hostedZoneId: "Z00000000000EXAMPLE",
+    hostedZoneName: "example.com",
+    domainName: "api.example.com",
     basePath: "dev",
   };
 
@@ -103,7 +103,7 @@ describe("ApiGateway Stack", () => {
       // Assert
       template.hasResourceProperties("AWS::ApiGatewayV2::ApiMapping", {
         ApiMappingKey: "test",
-        DomainName: "tg.qlibin.com",
+        DomainName: "api.example.com",
       });
     });
   });
@@ -116,7 +116,7 @@ describe("ApiGateway Stack", () => {
 
       // Assert
       template.hasResourceProperties("AWS::ApiGatewayV2::DomainName", {
-        DomainName: "tg.qlibin.com",
+        DomainName: "api.example.com",
         DomainNameConfigurations: Match.arrayWith([
           Match.objectLike({
             CertificateArn:
@@ -134,7 +134,7 @@ describe("ApiGateway Stack", () => {
 
       // Assert
       template.hasResourceProperties("AWS::Route53::RecordSet", {
-        Name: "tg.qlibin.com.",
+        Name: "api.example.com.",
         Type: "A",
         AliasTarget: Match.objectLike({
           DNSName: Match.anyValue(),
