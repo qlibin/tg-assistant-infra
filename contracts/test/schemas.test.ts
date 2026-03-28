@@ -86,8 +86,8 @@ describe("OrderMessageSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects invalid taskType", () => {
-    const msg = { ...validOrderMessage(), taskType: "unknown-task" };
+  it("rejects invalid taskType format", () => {
+    const msg = { ...validOrderMessage(), taskType: "INVALID_TYPE" };
     const result = OrderMessageSchema.safeParse(msg);
     expect(result.success).toBe(false);
   });
@@ -260,22 +260,37 @@ describe("ResultMessageSchema", () => {
 });
 
 describe("shared enums", () => {
-  it("TaskTypeSchema accepts all 9 task types", () => {
-    const taskTypes = [
+  it("TaskTypeSchema accepts valid kebab-case task types", () => {
+    const validTypes = [
       "playwright-scraping",
       "url-monitoring",
       "web-automation",
-      "perplexity-summary",
-      "content-analysis",
       "text-processing",
-      "scheduled-linkedin",
-      "scheduled-german",
-      "system-health",
+      "pdf-generation",
+      "my-new-worker",
+      "simple",
+      "a1-b2-c3",
     ];
-    for (const taskType of taskTypes) {
+    for (const taskType of validTypes) {
       expect(TaskTypeSchema.safeParse(taskType).success).toBe(true);
     }
-    expect(TaskTypeSchema.options).toHaveLength(9);
+  });
+
+  it("TaskTypeSchema rejects invalid task types", () => {
+    const invalidTypes = [
+      "",
+      "UPPERCASE",
+      "camelCase",
+      "has spaces",
+      "has_underscores",
+      "-leading-dash",
+      "trailing-dash-",
+      "double--dash",
+      "123-starts-with-number",
+    ];
+    for (const taskType of invalidTypes) {
+      expect(TaskTypeSchema.safeParse(taskType).success).toBe(false);
+    }
   });
 
   it("PrioritySchema accepts all 4 priorities", () => {
