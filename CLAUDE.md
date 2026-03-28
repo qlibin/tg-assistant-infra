@@ -70,7 +70,19 @@ All queues encrypted with KMS key (rotation enabled). CloudWatch alarms monitor 
 
 ### Environment Configuration
 
-Defined in `infrastructure/cdk.json` context. Environments: `dev`, `test`, `prod`. Stack names follow pattern: `DualQueueMessageStack-{env}`. Resource names: `{project}-{env}-{purpose}`.
+Environments (`dev`, `test`, `prod`) are defined in `infrastructure/cdk.json` context with non-sensitive config (region, envName, tags). Stack names follow pattern: `DualQueueMessageStack-{env}`. Resource names: `{project}-{env}-{purpose}`.
+
+**Environment variables** (required for CDK synth/diff/deploy):
+
+| Variable | Required | Source (CI/CD) | Purpose |
+|---|---|---|---|
+| `AWS_ACCOUNT_ID` | Yes | GH Variable | AWS account for stack deployment |
+| `CERTIFICATE_ARN` | No | GH Variable | ACM certificate for custom domain |
+| `HOSTED_ZONE_ID` | No | GH Variable | Route 53 hosted zone ID |
+| `HOSTED_ZONE_NAME` | No | GH Variable | Route 53 zone name |
+| `DOMAIN_NAME` | No | GH Variable | Custom domain name |
+
+Domain-related variables are optional — the ApiGateway stack is only created when all four are provided. For local development, copy `infrastructure/.env.example` to `infrastructure/.env` and fill in values.
 
 SSM parameters exported under `/automation/{environment}/...`.
 
