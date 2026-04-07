@@ -92,5 +92,5 @@ For issues related to:
 
 - [tg-assistant-infra](https://github.com/qlibin/tg-assistant-infra) — shared SQS, API Gateway, IAM infrastructure
 - [tg-assistant](https://github.com/qlibin/tg-assistant) — webhook + feedback Lambdas
-- [tg-assistant-echo](https://github.com/qlibin/tg-assistant-echo) — Canary/echo worker Lambda for end-to-end testing
+- [tg-worker-echo](https://github.com/qlibin/tg-worker-echo) — Canary/echo worker Lambda for end-to-end testing
 - [@qlibin/tg-assistant-contracts](https://www.npmjs.com/package/@qlibin/tg-assistant-contracts) — shared message schemas
