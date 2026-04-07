@@ -88,3 +88,9 @@ For issues related to:
 - **Test Failures**: Review Jest configuration and test patterns
 - **Junie Agent**: Consult `.junie/guidelines.md` for agent behavior
 
+## Related repos
+
+- [tg-assistant-infra](https://github.com/qlibin/tg-assistant-infra) — shared SQS, API Gateway, IAM infrastructure
+- [tg-assistant](https://github.com/qlibin/tg-assistant) — webhook + feedback Lambdas
+- [tg-assistant-echo](https://github.com/qlibin/tg-assistant-echo) — Canary/echo worker Lambda for end-to-end testing
+- [@qlibin/tg-assistant-contracts](https://www.npmjs.com/package/@qlibin/tg-assistant-contracts) — shared message schemas
