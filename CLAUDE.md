@@ -46,7 +46,6 @@ npm run deploy         # Deploy stack
 `@qlibin/tg-assistant-contracts` — shared Zod schemas and TypeScript types for SQS message formats. Published to npm public registry.
 
 - **Zod as single source of truth**: schemas define both TypeScript types (`z.infer<>`) and generate JSON Schema files at build time via `zod-to-json-schema`.
-- **Shared enums**: `TaskType` (9 values), `Priority` (4 values) used by both `OrderMessageSchema` and `ResultMessageSchema`.
 - **Publishing**: Uses OIDC Trusted Publishing (no secrets needed). To publish a new version:
   1. Bump `version` in `contracts/package.json`
   2. Commit the version bump
