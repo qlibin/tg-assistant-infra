@@ -1,96 +1,112 @@
-# AWS infrastructure for personal assistant Telegram Bot
+# tg-assistant-infra
 
-## 🤖 Working with Junie Agent
+Shared AWS infrastructure for the Telegram personal assistant bot. Defines the SQS messaging backbone, API Gateway, IAM roles, KMS encryption, CloudWatch alarms, and SSM parameter exports consumed by all other repos in the system.
 
-### Configuration
+## Packages
 
-Junie Agent is configured with project-specific guidelines in `.junie/guidelines.md`. These include:
+| Directory         | Description                                                                                                           |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `contracts/`      | `@qlibin/tg-assistant-contracts` — shared Zod schemas and TypeScript types for SQS message formats (published to npm) |
+| `infrastructure/` | AWS CDK stacks: SQS queues, API Gateway, IAM roles, KMS key, CloudWatch alarms                                        |
 
-- TypeScript strict mode requirements
-- Testing coverage standards
-- Security best practices
-- Code style conventions
-- Anti-hallucination measures
+## System Architecture
 
-### Best Practices
+This repo sits at the center of a three-repo pipeline:
 
-1. **Clear Instructions**: Provide specific, actionable requirements
-2. **Context Awareness**: Ensure Junie understands existing code patterns
-3. **Incremental Development**: Break complex features into smaller tasks
-4. **Quality Verification**: Always review generated code and tests
-5. **Guidelines Adherence**: Junie follows project-specific rules automatically
+```
+Telegram → API Gateway (this repo)
+               ↓
+         Webhook Lambda (tg-assistant)
+               ↓ sqs:SendMessage
+         Order Queue (this repo)
+               ↓ SQS event source
+         Worker Lambda (tg-worker-*)
+               ↓ sqs:SendMessage
+         Result Queue (this repo)
+               ↓ SQS event source
+         Feedback Lambda (tg-assistant)
+               ↓
+           Telegram User
+```
 
-## 📊 Code Quality Standards
+### SQS Stack
 
-### TypeScript Configuration
+Dual-queue pattern with DLQs and KMS encryption:
 
-- Strict mode enabled with comprehensive type checking
-- No `any` types allowed - use `unknown` or proper types
-- Exact optional property types enforced
-- Unused locals and parameters detected
+- **Order Queue** — receives work items from the webhook lambda
+- **Result Queue** — receives processing results from worker lambdas
+- Both queues have Dead Letter Queues (7-day retention)
 
-### ESLint Rules
+Three pre-built IAM roles (no Lambdas defined here — lambdas live in consumer repos):
 
-- No explicit `any` usage
-- Prefer `const` over `let`
-- Require array sort compare functions
-- Await thenable promises
-- No floating promises
+| Role            | Permissions                                                                 |
+|-----------------|-----------------------------------------------------------------------------|
+| `webhook-role`  | `sqs:SendMessage` → Order Queue                                             |
+| `worker-role`   | `sqs:ReceiveMessage/Delete` ← Order Queue, `sqs:SendMessage` → Result Queue |
+| `feedback-role` | `sqs:ReceiveMessage/Delete` ← Result Queue, `sqs:SendMessage` → Order Queue |
 
-### Formatting
+### API Gateway Stack
 
-- Prettier with consistent configuration
-- 2-space indentation
-- Single quotes preferred
-- Trailing commas for ES5 compatibility
-- 100 character line length
+HTTP API (v2) with a custom domain, per-environment stage, throttling, access logging, and CloudWatch alarms for 5XX errors and latency. Consumer lambdas attach their own routes using the API ID exported to SSM.
 
-## 🤝 Contributing
+### SSM Parameter Exports
 
-### Pre-commit Checklist
+All cross-repo configuration is published to SSM under `/automation/{env}/...`:
 
-All commits must pass these automated checks:
+| Parameter                     | Value                 |
+|-------------------------------|-----------------------|
+| `.../queues/order/url`        | Order Queue URL       |
+| `.../queues/order/arn`        | Order Queue ARN       |
+| `.../queues/result/url`       | Result Queue URL      |
+| `.../queues/result/arn`       | Result Queue ARN      |
+| `.../roles/webhook/arn`       | Webhook IAM Role ARN  |
+| `.../roles/worker/arn`        | Worker IAM Role ARN   |
+| `.../roles/feedback/arn`      | Feedback IAM Role ARN |
+| `.../api-gateway/id`          | HTTP API ID           |
+| `.../api-gateway/url`         | HTTP API URL          |
+| `.../api-gateway/domain-name` | Custom domain name    |
 
-- ✅ TypeScript compilation (zero errors)
-- ✅ ESLint validation (zero violations)  
-- ✅ Prettier formatting (consistent style)
-- ✅ Test execution (all tests passing)
-- ✅ Coverage thresholds (85%+ minimum)
-- ✅ Security audit (no critical issues)
+### Contracts Package
 
-### Development Workflow
+`@qlibin/tg-assistant-contracts` — consumed by all three repos. Zod schemas are the single source of truth: they generate TypeScript types and JSON Schema files at build time.
 
-1. Create feature branch from main
-2. Implement changes following guidelines
-3. Add/update tests to maintain coverage
-4. Run quality checks locally
-5. Submit pull request
-6. Automated checks must pass
-7. Code review and merge
+Key types: `OrderMessageSchema`, `ResultMessageSchema`, `TaskType` (kebab-case string), `Priority` (`low | normal | high | critical`).
 
-## 📚 Additional Resources
+**Publishing a new version:**
+1. Bump `version` in `contracts/package.json`
+2. Commit, then `git tag contracts-v<version>` and push the tag
+3. GitHub Actions publishes to npm via OIDC (no secrets needed)
 
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [Jest Testing Framework](https://jestjs.io/docs/getting-started)
-- [ESLint Rules Reference](https://eslint.org/docs/rules/)
-- [Zod Validation Library](https://zod.dev/)
-- [IntelliJ IDEA TypeScript Support](https://www.jetbrains.com/help/idea/typescript-support.html)
+## Local Development
 
-## 📄 License
+Copy `infrastructure/.env.example` to `infrastructure/.env` and fill in `AWS_ACCOUNT_ID` and the optional domain variables.
 
-MIT License - see LICENSE file for details.
+```bash
+# Contracts
+cd contracts
+npm run validate       # build + lint + format + type-check + test
 
-## 🐛 Issues & Support
+# Infrastructure
+cd infrastructure
+npm run validate       # build + lint + format + type-check + test
+npm run diff           # show CDK diff against deployed stack
+npm run deploy         # deploy (uses aws-course AWS profile)
+```
 
-For issues related to:
-- **Project Structure**: Check this README and project guidelines
-- **TypeScript Errors**: Verify tsconfig.json and type definitions
-- **Test Failures**: Review Jest configuration and test patterns
-- **Junie Agent**: Consult `.junie/guidelines.md` for agent behavior
+## Deployment
 
-## Related repos
+- **CI** — runs on PRs: validates and generates a CDK diff as a PR comment
+- **CD** — runs on main branch push: deploys to `dev` (configurable via `ENV_NAME`)
+- **Auth** — GitHub Actions assumes `GithubActionsDeploymentRole` via OIDC
+
+Deploy order when standing up a new environment:
+1. `tg-assistant-infra` (this repo) — creates queues, roles, API Gateway, SSM params
+2. `tg-assistant` — webhook + feedback lambdas attach to the shared API Gateway
+3. `tg-worker-*` — workers import queue URLs and IAM roles from SSM
+
+## Related Repos
 
 - [tg-assistant-infra](https://github.com/qlibin/tg-assistant-infra) — shared SQS, API Gateway, IAM infrastructure
 - [tg-assistant](https://github.com/qlibin/tg-assistant) — webhook + feedback Lambdas
-- [tg-worker-echo](https://github.com/qlibin/tg-worker-echo) — Canary/echo worker Lambda for end-to-end testing
-- [@qlibin/tg-assistant-contracts](https://www.npmjs.com/package/@qlibin/tg-assistant-contracts) — shared message schemas
+- [tg-worker-echo](https://github.com/qlibin/tg-worker-echo) — canary worker Lambda for end-to-end pipeline testing
+- [@qlibin/tg-assistant-contracts](https://www.npmjs.com/package/@qlibin/tg-assistant-contracts) — shared message schemas (published from `contracts/`)
