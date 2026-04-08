@@ -485,11 +485,6 @@ exports[`SQS Stack synthesizes expected CloudFormation template (snapshot) 1`] =
                     "sqs:GetQueueAttributes",
                     "sqs:GetQueueUrl",
                   ],
-                  "Condition": {
-                    "StringEquals": {
-                      "aws:SourceAccount": "123456789012",
-                    },
-                  },
                   "Effect": "Allow",
                   "Resource": {
                     "Fn::GetAtt": [
