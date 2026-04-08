@@ -148,6 +148,28 @@ describe("OrderMessageSchema", () => {
     const result = OrderMessageSchema.safeParse(msg);
     expect(result.success).toBe(false);
   });
+
+  it("accepts chatId when provided", () => {
+    const msg = { ...validOrderMessage(), chatId: 123456789 };
+    const result = OrderMessageSchema.safeParse(msg);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.chatId).toBe(123456789);
+    }
+  });
+
+  it("accepts message without chatId (backward compatibility with 2.0.0)", () => {
+    const msg = validOrderMessage();
+    expect(msg).not.toHaveProperty("chatId");
+    const result = OrderMessageSchema.safeParse(msg);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-integer chatId", () => {
+    const msg = { ...validOrderMessage(), chatId: 12.5 };
+    const result = OrderMessageSchema.safeParse(msg);
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("ResultMessageSchema", () => {
@@ -256,6 +278,28 @@ describe("ResultMessageSchema", () => {
     if (result.success) {
       expect(result.data.queueMetrics).not.toHaveProperty("extra");
     }
+  });
+
+  it("accepts chatId when provided", () => {
+    const msg = { ...validResultMessage(), chatId: 987654321 };
+    const result = ResultMessageSchema.safeParse(msg);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.chatId).toBe(987654321);
+    }
+  });
+
+  it("accepts message without chatId (backward compatibility with 2.0.0)", () => {
+    const msg = validResultMessage();
+    expect(msg).not.toHaveProperty("chatId");
+    const result = ResultMessageSchema.safeParse(msg);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-integer chatId", () => {
+    const msg = { ...validResultMessage(), chatId: 12.5 };
+    const result = ResultMessageSchema.safeParse(msg);
+    expect(result.success).toBe(false);
   });
 });
 

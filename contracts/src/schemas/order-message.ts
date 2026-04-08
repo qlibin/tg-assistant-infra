@@ -20,6 +20,7 @@ export const OrderMessageSchema = z.object({
   payload: PayloadSchema,
   userId: z.string().min(1),
   timestamp: z.string().datetime(),
+  chatId: z.number().int().optional(),
   priority: PrioritySchema.optional(),
   retryCount: z.number().int().min(0).max(3).optional(),
   deduplicationId: z.string().max(128).optional(),

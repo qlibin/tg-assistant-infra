@@ -50,6 +50,7 @@ export const ResultMessageSchema = z.object({
   processingTime: z.number(),
   timestamp: z.string().datetime(),
   userId: z.string().min(1),
+  chatId: z.number().int().optional(),
   followUpAction: FollowUpActionSchema.optional(),
   priority: PrioritySchema.optional(),
   retryCount: z.number().int().min(0).max(3).optional(),
