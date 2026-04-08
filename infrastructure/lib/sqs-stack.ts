@@ -140,9 +140,6 @@ export class SQSStack extends Stack {
                 "sqs:GetQueueUrl",
               ],
               resources: [this.orderQueue.queueArn],
-              conditions: {
-                StringEquals: { "aws:SourceAccount": this.account },
-              },
             }),
             new PolicyStatement({
               effect: Effect.ALLOW,
